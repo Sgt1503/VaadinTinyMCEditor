@@ -15,7 +15,6 @@
     "@polymer/iron-resizable-behavior": "3.0.1",
     "@polymer/iron-scroll-target-behavior": "3.0.1",
     "@polymer/polymer": "3.2.0",
-    "@tinymce/tinymce-webcomponent": "2.0.0",
     "@vaadin/vaadin-accordion": "1.2.0",
     "@vaadin/vaadin-app-layout": "2.2.0",
     "@vaadin/vaadin-avatar": "1.0.4",
@@ -66,8 +65,30 @@
     "@webcomponents/shadycss": "1.8.0",
     "@webcomponents/webcomponentsjs": "^2.2.10",
     "construct-style-sheets-polyfill": "3.0.4",
+    "inputmask": "^5.0.7",
+    "jquery": "^3.6.0",
     "lit-element": "2.5.1",
     "lit-html": "1.4.1"
+  },
+  "devDependencies": {
+    "babel-loader": "8.2.2",
+    "chokidar": "^3.5.0",
+    "compression-webpack-plugin": "4.0.1",
+    "copy-webpack-plugin": "5.1.2",
+    "css-loader": "4.2.1",
+    "extra-watch-webpack-plugin": "1.0.3",
+    "extract-loader": "5.1.0",
+    "file-loader": "6.1.0",
+    "html-webpack-plugin": "4.5.2",
+    "lit-css-loader": "0.0.4",
+    "raw-loader": "3.1.0",
+    "ts-loader": "8.0.12",
+    "typescript": "4.0.3",
+    "webpack": "4.42.0",
+    "webpack-babel-multi-target-plugin": "2.5.0",
+    "webpack-cli": "3.3.11",
+    "webpack-dev-server": "3.11.0",
+    "webpack-merge": "4.2.2"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -188,26 +209,6 @@
     "inputmask": "$inputmask",
     "jquery": "$jquery"
   },
-  "devDependencies": {
-    "babel-loader": "8.2.2",
-    "chokidar": "^3.5.0",
-    "compression-webpack-plugin": "4.0.1",
-    "copy-webpack-plugin": "5.1.2",
-    "css-loader": "4.2.1",
-    "extra-watch-webpack-plugin": "1.0.3",
-    "extract-loader": "5.1.0",
-    "file-loader": "6.1.0",
-    "html-webpack-plugin": "4.5.2",
-    "lit-css-loader": "0.0.4",
-    "raw-loader": "3.1.0",
-    "ts-loader": "8.0.12",
-    "typescript": "4.0.3",
-    "webpack": "4.42.0",
-    "webpack-babel-multi-target-plugin": "2.5.0",
-    "webpack-cli": "3.3.11",
-    "webpack-dev-server": "3.11.0",
-    "webpack-merge": "4.2.2"
-  },
   "vaadin": {
     "dependencies": {
       "@polymer/iron-a11y-announcer": "3.0.2",
@@ -223,7 +224,6 @@
       "@polymer/iron-resizable-behavior": "3.0.1",
       "@polymer/iron-scroll-target-behavior": "3.0.1",
       "@polymer/polymer": "3.2.0",
-      "@tinymce/tinymce-webcomponent": "2.0.0",
       "@vaadin/vaadin-accordion": "1.2.0",
       "@vaadin/vaadin-app-layout": "2.2.0",
       "@vaadin/vaadin-avatar": "1.0.4",
@@ -274,6 +274,8 @@
       "@webcomponents/shadycss": "1.8.0",
       "@webcomponents/webcomponentsjs": "^2.2.10",
       "construct-style-sheets-polyfill": "3.0.4",
+      "inputmask": "5.0.7",
+      "jquery": "3.6.0",
       "lit-element": "2.5.1",
       "lit-html": "1.4.1"
     },
@@ -297,6 +299,6 @@
       "webpack-dev-server": "3.11.0",
       "webpack-merge": "4.2.2"
     },
-    "hash": "0e87c30b28e2eb0101aec81529d78f55fb3c1fe40b7fe4b5e00640a3725453f8"
+    "hash": "e87437454ecdfe1d55235d07cbbce8575bcb622458498d35602887a74eee8a55"
   }
 }
