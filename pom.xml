@@ -6,7 +6,7 @@
 
     <groupId>org.vaadin.addons.TinyMCEeditor</groupId>
     <artifactId>TinyMCEeditorForVaadin</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
     <packaging>jar</packaging>
     <name>TinyMCEeditorForVaadin</name>
     <description>TinyMCE for Vaadin</description>

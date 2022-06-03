@@ -178,7 +178,7 @@ public class TinyMCEeditor extends CustomField<String> {
     }
     if (isInit) {
       getJavaScriptInvoke(this.getElement().getNode(),
-              elem + ".shadowRoot.querySelector('iframe').contentDocument.body.innerHTML =  '" + strValue +  "';"
+              elem + ".shadowRoot.querySelector('iframe').contentDocument.body.innerHTML =  '" + setStringBeforeInit != null ? setStringBeforeInit : strValue +  "';"
       );
     }
   }
@@ -193,7 +193,7 @@ public class TinyMCEeditor extends CustomField<String> {
       return;
     if (isInit)
       getJavaScriptInvoke(this.getElement().getNode(),
-              "tinymce.activeEditor.selection.setContent('" +"<p>" + queueOfStringsToAppend.peek() + "</p>" + "');"
+              "tinymce.activeEditor.selection.setContent('" +"<p>" + queueOfStringsToAppend != null ? queueOfStringsToAppend.peek() : strValue + "</p>" + "');"
       );
   }
 
