@@ -8,6 +8,8 @@ import com.vaadin.flow.component.internal.PendingJavaScriptInvocation;
 import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.internal.StateNode;
 
+import java.util.Queue;
+
 /**
  * @author Sergey.Tolstykh
  * @version 1.0
@@ -21,6 +23,9 @@ public class TinyMCEeditor extends CustomField<String> {
   private String id;
   private String elem;
   private String innerHTML;
+  private boolean isInit = false;
+  private Queue<String> queueOfStringsToAppend;
+  private String setStringBeforeInit;
 
   public TinyMCEeditor(String apikey, String innerHTML,String height, String menubar, String plugins, String toolbar, String contentStyle) {
     setApiKey(apikey != null ? apikey : "no-api-key");
@@ -36,6 +41,16 @@ public class TinyMCEeditor extends CustomField<String> {
       setContentStyle(contentStyle);
     if (innerHTML != null)
       this.innerHTML = innerHTML;
+    getElement().setAttribute("id", "text-editor");
+    id = getElement().getAttribute("id");
+    elem = "document.getElementById('" + id + "')";
+    addTextChangeListener();
+    addEventOnInit();
+  }
+
+  @Override
+  public void setId(String id) {
+    super.setId(id);
     getElement().setAttribute("id", "text-editor");
     id = getElement().getAttribute("id");
     elem = "document.getElementById('" + id + "')";
@@ -101,6 +116,7 @@ public class TinyMCEeditor extends CustomField<String> {
     });
     return pending;
   }
+
   private PendingJavaScriptInvocation getJavaScriptInvoke(StateNode node, String expression) {
     UIInternals.JavaScriptInvocation invocation = new UIInternals.JavaScriptInvocation(expression);
     PendingJavaScriptInvocation pending = new PendingJavaScriptInvocation(node, invocation);
@@ -113,10 +129,9 @@ public class TinyMCEeditor extends CustomField<String> {
     });
     return pending;
   }
-
   public void addTextChangeListener() {
     getJavaScriptInvoke(this.getElement().getNode(),
-    "var elem = document.getElementById('text-editor');\n" +
+    "var elem = document.getElementById('"+ id +"');\n" +
             "\n" +
             "async function waitForTiny() {\n" +
             "    while (typeof tinymce !== \"object\") {\n" +
@@ -137,8 +152,9 @@ public class TinyMCEeditor extends CustomField<String> {
             "}\n" +
             "\n" +
             "waitForTiny().then(()=>{\n" +
-            "    setupEditor(elem.shadowRoot.getElementById('mce_0_ifr').contentDocument.body);\n" +
-            elem + ".shadowRoot.getElementById('mce_0_ifr').contentDocument.body.innerHTML =  '" + innerHTML +  "';"+
+            "    setupEditor(elem.shadowRoot.querySelector('iframe').contentDocument.body);\n" +
+            "elem.shadowRoot.querySelector('iframe').contentDocument.body.innerHTML =  '" + innerHTML +  "';\n" +
+            "elem.dispatchEvent(new Event('FieldInit'));\n"+
             "});\n" +
             "\n" +
             "async function sleep(ms) {\n" +
@@ -156,20 +172,44 @@ public class TinyMCEeditor extends CustomField<String> {
   }
 
   public void setStrValue(String strValue) {
-    if (id != null)
+    if (!isInit) {
+      //In case if server invoke method before client's side editor initialized
+      setStringBeforeInit = strValue;
+    }
+    if (isInit) {
       getJavaScriptInvoke(this.getElement().getNode(),
-              elem + ".shadowRoot.getElementById('mce_0_ifr').contentDocument.body.innerHTML =  '" + strValue +  "';"
+              elem + ".shadowRoot.querySelector('iframe').contentDocument.body.innerHTML =  '" + strValue +  "';"
       );
+    }
   }
+
   //TODO: value puts to top sometimes
   public void appendStrValue(String strValue) {
+    if (!isInit) {
+      //In case if server invoke method before client's side editor initialized
+      queueOfStringsToAppend.add(strValue);
+    }
     if (getValue() == null)
       return;
-    if (id != null)
+    if (isInit)
       getJavaScriptInvoke(this.getElement().getNode(),
-              "tinymce.activeEditor.selection.setContent('" +"<p>" + strValue + "</p>" + "');"
+              "tinymce.activeEditor.selection.setContent('" +"<p>" + queueOfStringsToAppend.peek() + "</p>" + "');"
       );
   }
 
+  private void addEventOnInit() {
+    getElement().addEventListener("FieldInit", l-> {
+      isInit = true;
+      //In case if server invoke method before client's side editor initialized
+      if (setStringBeforeInit != null)
+        setStrValue(setStringBeforeInit);
+      if (queueOfStringsToAppend != null)
+        while (!queueOfStringsToAppend.isEmpty())
+          appendStrValue(queueOfStringsToAppend.peek());
+    });
+  }
 
+  public boolean isInit() {
+    return isInit;
+  }
 }
