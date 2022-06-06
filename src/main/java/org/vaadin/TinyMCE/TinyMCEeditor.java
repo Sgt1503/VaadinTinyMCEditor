@@ -131,43 +131,49 @@ public class TinyMCEeditor extends CustomField<String> {
   }
   public void addTextChangeListener() {
     getJavaScriptInvoke(this.getElement().getNode(),
-"let elem = document.getElementById('text-editor');\n" +
-        "let iframe;\n" +
-        "async function waitForTiny() {\n" +
-        "    while (typeof tinymce !== \"object\") {\n" +
-        "       await sleep(1000); \n" +
-        "    }\n" +
-        "    iframe = elem.shadowRoot.querySelector('iframe')\n" +
-        "    while (typeof iframe !== \"object\"){\n" +
-        "        await sleep(1000)\n" +
-        "    }\n" +
-        "    return tinymce;\n" +
-        "}\n" +
-        "\n" +
-        "\n" +
-        "\n" +
-        "function setupEditor() {\n" +
-        "    let observer = new MutationObserver(mutations  => {\n" +
-        "        elem.dispatchEvent(new Event('Change'));\n" +
-        "    });\n" +
-        "    observer.observe(iframe.contentDocument, {\n" +
-        "    childList: true, // наблюдать за непосредственными детьми\n" +
-        "    subtree: true, // и более глубокими потомками\n" +
-        "    characterDataOldValue: true // передавать старое значение в колбэк\n" +
-        "    });\n" +
-        "}\n" +
-        "\n" +
-        "\n" +
-        "waitForTiny().then(()=>{\n" +
-        "    setupEditor();\n" +
-        "    iframe.contentDocument.body.innerHTML =  '" + innerHTML + "';\n" +
-        "    elem.dispatchEvent(new Event('FieldInit'));\n" +
-        "});\n" +
-        "\n" +
-        "async function sleep(ms) {\n" +
-        "    return new Promise(resolve => setTimeout(resolve, ms));\n" +
-        "}\n" +
-        "\n"
+    "let elem = document.getElementById('text-editor');\n" +
+            "let iframe;\n" +
+            "let conDoc;\n" +
+            "\n" +
+            "\n" +
+            "async function waitForTiny() {\n" +
+            "    while (typeof tinymce !== \"object\") {\n" +
+            "       await sleep(1000); \n" +
+            "    }\n" +
+            "    iframe = elem.shadowRoot.querySelector('iframe')\n" +
+            "    while (typeof iframe !== \"object\"){\n" +
+            "        await sleep(1000)\n" +
+            "    }\n" +
+            "    while (!!!tinymce.activeEditor.getBody()){\n" +
+            "        await sleep(1000)\n" +
+            "    }\n" +
+            "    conDoc = tinymce.activeEditor.getBody();\n" +
+            "    return tinymce;\n" +
+            "}\n" +
+            "\n" +
+            "async function sleep(ms) {\n" +
+            "    return new Promise(resolve => setTimeout(resolve, ms));\n" +
+            "}\n" +
+            "\n" +
+            "function setupEditor() {\n" +
+            "    let observer = new MutationObserver(mutations  => {\n" +
+            "        elem.dispatchEvent(new Event('Change'));\n" +
+            "    });\n" +
+            "    observer.observe(conDoc, {\n" +
+            "    childList: true, // наблюдать за непосредственными детьми\n" +
+            "    subtree: true, // и более глубокими потомками\n" +
+            "    characterDataOldValue: true // передавать старое значение в колбэк\n" +
+            "    });\n" +
+            "}\n" +
+            "\n" +
+            "\n" +
+            "\n" +
+            "waitForTiny().then(()=>{\n" +
+            "    setupEditor();\n" +
+            "    iframe.contentDocument.body.innerHTML =  '" + innerHTML + "';\n" +
+            "    elem.dispatchEvent(new Event('FieldInit'));\n" +
+            "});\n" +
+            "\n"
     );
 
     getElement().addEventListener("Change", l -> {

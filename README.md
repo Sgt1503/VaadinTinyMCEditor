@@ -33,8 +33,8 @@ You should change the `organisation.name` property in `pom.xml` to your own name
 You can create the zip package needed for [Vaadin Directory](https://vaadin.com/directory/) using
 
 ```
-mvn versions:set -DnewVersion=1.0.0 # You cannot publish snapshot versions 
-mvn install -Pdirectory
+mvn versions:set -DnewVersion=1.0.0 ~~~~# You cannot publish snapshot versions 
+~~mvn install -Pdirectory~~
 ```
 
 The package is created as `target/{project-name}-1.0.0.zip`
