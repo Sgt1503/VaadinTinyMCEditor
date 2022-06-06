@@ -146,11 +146,11 @@ public class TinyMCEeditor extends CustomField<String> {
         "\n" +
         "\n" +
         "\n" +
-        "function setupEditor(editor) {\n" +
+        "function setupEditor() {\n" +
         "    let observer = new MutationObserver(mutations  => {\n" +
         "        elem.dispatchEvent(new Event('Change'));\n" +
         "    });\n" +
-        "    observer.observe(editor, {\n" +
+        "    observer.observe(iframe.contentDocument, {\n" +
         "    childList: true, // наблюдать за непосредственными детьми\n" +
         "    subtree: true, // и более глубокими потомками\n" +
         "    characterDataOldValue: true // передавать старое значение в колбэк\n" +
@@ -159,7 +159,7 @@ public class TinyMCEeditor extends CustomField<String> {
         "\n" +
         "\n" +
         "waitForTiny().then(()=>{\n" +
-        "    setupEditor(elem);\n" +
+        "    setupEditor();\n" +
         "    iframe.contentDocument.body.innerHTML =  '" + innerHTML + "';\n" +
         "    elem.dispatchEvent(new Event('FieldInit'));\n" +
         "});\n" +
