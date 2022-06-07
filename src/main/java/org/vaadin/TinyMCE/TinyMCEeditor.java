@@ -6,7 +6,9 @@ import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.internal.PendingJavaScriptInvocation;
 import com.vaadin.flow.component.internal.UIInternals;
+import com.vaadin.flow.function.SerializableConsumer;
 import com.vaadin.flow.internal.StateNode;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Queue;
 
@@ -19,15 +21,18 @@ import java.util.Queue;
 @Tag("tinymce-editor")
 @NpmPackage(value = "@tinymce/tinymce-webcomponent",version = "2.0.0")
 @JsModule("./src/tinymce-loader.js")
-public class TinyMCEeditor extends CustomField<String> {
+public class TinyMCEeditor<T extends Object> extends CustomField<T> {
+  private T t;
   private String id;
   private String elem;
   private String innerHTML;
   private boolean isInit = false;
   private Queue<String> queueOfStringsToAppend;
   private String setStringBeforeInit;
+  private String setStringTagBeforeInit;
+  private SerializableConsumer<String> serializableConsumer;
 
-  public TinyMCEeditor(String apikey, String innerHTML,String height, String menubar, String plugins, String toolbar, String contentStyle) {
+  public TinyMCEeditor(String apikey, String innerHTML,String height, String menubar, String plugins, String toolbar, String contentStyle, SerializableConsumer<String> serializableConsumer, T t) {
     setApiKey(apikey != null ? apikey : "no-api-key");
     if (height != null)
       setEditorHeight(height);
@@ -41,6 +46,34 @@ public class TinyMCEeditor extends CustomField<String> {
       setContentStyle(contentStyle);
     if (innerHTML != null)
       this.innerHTML = innerHTML;
+    if (serializableConsumer != null)
+      this.serializableConsumer = serializableConsumer;
+    if (t != null)
+      this.t = t;
+    getElement().setAttribute("id", "text-editor");
+    id = getElement().getAttribute("id");
+    elem = "document.getElementById('" + id + "')";
+    addTextChangeListener();
+    addEventOnInit();
+  }
+
+  public TinyMCEeditor(String apikey, String innerHTML,String height, String menubar, String plugins, String toolbar, String contentStyle, SerializableConsumer<String> serializableConsumer) {
+    setApiKey(apikey != null ? apikey : "no-api-key");
+    if (height != null)
+      setEditorHeight(height);
+    if (menubar != null)
+      setMenubar(menubar);
+    if (plugins != null)
+      setPlugins(plugins);
+    if (toolbar != null)
+      setToolbar(toolbar);
+    if (contentStyle != null)
+      setContentStyle(contentStyle);
+    if (innerHTML != null)
+      this.innerHTML = innerHTML;
+    if (serializableConsumer != null) {
+      this.serializableConsumer = serializableConsumer;
+    }
     getElement().setAttribute("id", "text-editor");
     id = getElement().getAttribute("id");
     elem = "document.getElementById('" + id + "')";
@@ -83,23 +116,23 @@ public class TinyMCEeditor extends CustomField<String> {
   }
 
   @Override
-  protected String generateModelValue() {
-    return getElement().getText();
+  protected T generateModelValue() {
+    return getValue();
   }
 
   @Override
-  protected void setPresentationValue(String s) {
-    super.setValue(s);
+  protected void setPresentationValue(T o) {
+    super.setValue(o);
   }
 
   @Override
-  public String getValue() {
+  public T getValue() {
     return super.getValue();
   }
 
   @Override
-  public void setValue(String value) {
-    super.setValue(value);
+  public void setValue(Object value) {
+    super.setValue((T) value);
   }
 
 
@@ -170,55 +203,120 @@ public class TinyMCEeditor extends CustomField<String> {
             "\n" +
             "waitForTiny().then(()=>{\n" +
             "    setupEditor();\n" +
-            "    iframe.contentDocument.body.innerHTML =  '" + innerHTML + "';\n" +
+            "    tinymce.activeEditor.setContent('" + getValidExpressionForInsert(innerHTML) + "');\n" +
             "    elem.dispatchEvent(new Event('FieldInit'));\n" +
             "});\n" +
             "\n"
     );
+    if (isTypeString())
+      addSetter();
+    else
+      addSetter(serializableConsumer);
+  }
 
+  boolean isTypeString(){
+    if (t == null)
+      return true;
+    return ((Class) t).getSimpleName().equals("String");
+  }
+
+  protected void addSetter() {
     getElement().addEventListener("Change", l -> {
       getJavaScriptReturn(this.getElement().getNode(),
               elem +
                       "._editor.getContent()")
-              .then(String.class, this::setValue);
+              .then(String.class, s -> setValue(s));
+    });
+  }
+  protected void addSetter(SerializableConsumer<String> serializableConsumer) {
+    if (serializableConsumer == null) {
+      serializableConsumer = (s)-> {throw new NullPointerException("No value consumer presented");};
+    }
+    SerializableConsumer<String> finalSerializableConsumer = serializableConsumer;
+    getElement().addEventListener("Change", l -> {
+      getJavaScriptReturn(this.getElement().getNode(),
+              elem +
+                      "._editor.getContent()")
+              .then(String.class,
+                      /*In this place you should send Consumer of String data from client
+                      *that will make type conversion from your generic T to String
+                      * and than make setValue(yourValue)
+                      * can be done as a simple lambda
+                      * s -> {
+                      *   T value = doSomth(s);
+                      *   setValue(value)}
+                      * */
+                      finalSerializableConsumer);
     });
   }
 
-  public void setStrValue(String strValue) {
+  public void setStrValue(String strValue, String tag) {
     if (!isInit) {
       //In case if server invoke method before client's side editor initialized
       setStringBeforeInit = strValue;
+      setStringTagBeforeInit = tag;
     }
-    if (isInit) {
+    if (isInit && (setStringTagBeforeInit != null || strValue.equals(setStringBeforeInit))) {
+      removeContent();
       getJavaScriptInvoke(this.getElement().getNode(),
-              elem + ".shadowRoot.querySelector('iframe').contentDocument.body.innerHTML =  '" + setStringBeforeInit != null ? setStringBeforeInit : strValue +  "';"
+              "tinymce.activeEditor.setContent('<"+ tag +">" + setStringBeforeInit +  "</" + tag + ">');"
+      );
+    }
+    if (isInit && strValue != null && !strValue.equals(setStringBeforeInit)) {
+      removeContent();
+      getJavaScriptInvoke(this.getElement().getNode(),
+              "tinymce.activeEditor.setContent('<"+ tag +">" +  strValue +  "</" + tag + ">');"
       );
     }
   }
 
-  //TODO: value puts to top sometimes
-  public void appendStrValue(String strValue) {
+  public PendingJavaScriptInvocation removeContent() {
+    setValue("");
+    return getJavaScriptInvoke(this.getElement().getNode(),
+            "tinymce.activeEditor.resetContent()"
+    );
+  }
+
+  public void appendStrValue(String strValue, String tag) {
+    String oldValue = (String) getValue();
     if (!isInit) {
       //In case if server invoke method before client's side editor initialized
       queueOfStringsToAppend.add(strValue);
     }
     if (getValue() == null)
       return;
-    if (isInit)
-      getJavaScriptInvoke(this.getElement().getNode(),
-              "tinymce.activeEditor.selection.setContent('" +"<p>" + queueOfStringsToAppend != null ? queueOfStringsToAppend.peek() : strValue + "</p>" + "');"
-      );
+    if (isInit) {
+      if (queueOfStringsToAppend != null) {
+        removeContent();
+        String expression = "tinymce.activeEditor.insertContent('" + getValidExpressionForInsert(oldValue) + "<" + tag + ">"  + queueOfStringsToAppend.peek() + "</" + tag + ">" + "');";
+        getJavaScriptInvoke(this.getElement().getNode(),
+                expression
+        );
+      }
+      if (queueOfStringsToAppend == null) {
+        removeContent();
+        String expression = "tinymce.activeEditor.insertContent('" + getValidExpressionForInsert(oldValue) + "<" + tag + ">" +  strValue + "</" + tag + ">" + "');";
+        getJavaScriptInvoke(this.getElement().getNode(),
+                expression
+        );
+      }
+    }
   }
+
+  public String getValidExpressionForInsert(String value) {
+    return StringUtils.replace(StringUtils.remove((!StringUtils.isEmpty(value) ? value : ""), "\n"), "'", "");
+  }
+
 
   private void addEventOnInit() {
     getElement().addEventListener("FieldInit", l-> {
       isInit = true;
       //In case if server invoke method before client's side editor initialized
-      if (setStringBeforeInit != null)
-        setStrValue(setStringBeforeInit);
+      if (setStringBeforeInit != null && setStringTagBeforeInit != null)
+        setStrValue(setStringBeforeInit, setStringTagBeforeInit);
       if (queueOfStringsToAppend != null)
         while (!queueOfStringsToAppend.isEmpty())
-          appendStrValue(queueOfStringsToAppend.peek());
+          appendStrValue(queueOfStringsToAppend.peek(), setStringTagBeforeInit);
     });
   }
 

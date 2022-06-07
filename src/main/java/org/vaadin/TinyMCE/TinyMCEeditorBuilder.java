@@ -1,6 +1,8 @@
 package org.vaadin.TinyMCE;
 
 
+import com.vaadin.flow.function.SerializableConsumer;
+
 /**
  * @author Sergey.Tolstykh
  * @version 1.0
@@ -8,7 +10,6 @@ package org.vaadin.TinyMCE;
  */
 
 public class TinyMCEeditorBuilder {
-
     //Plugins
     public enum Plugins{
         PLUGIN_ADVLIST("advlist"),
@@ -131,6 +132,12 @@ public class TinyMCEeditorBuilder {
     private String contentStyle;
     private String apiKey;
     private String innerHTML;
+    private SerializableConsumer<String> serializableConsumer;
+
+    public TinyMCEeditorBuilder setSerializableConsumer(SerializableConsumer<String> serializableConsumer) {
+        this.serializableConsumer = serializableConsumer;
+        return this;
+    }
 
     public TinyMCEeditorBuilder setInnerHTML(String innerHTML) {
         this.innerHTML = innerHTML;
@@ -182,8 +189,13 @@ public class TinyMCEeditorBuilder {
         return this;
     }
 
-    public TinyMCEeditor createTinyMCEeditor() {
-        return new TinyMCEeditor(apiKey, innerHTML,height, menubar, plugins, toolbar, contentStyle);
+    public <T> TinyMCEeditor<Class<T>> createTinyMCEeditor(Class<T>  t) {
+        return new TinyMCEeditor<>(apiKey, innerHTML, height, menubar, plugins, toolbar, contentStyle, serializableConsumer, t);
+    }
+
+    public TinyMCEeditor<String> createTinyMCEeditor() {
+        TinyMCEeditor<String> tinyMCEeditor = new TinyMCEeditor<>(apiKey, innerHTML, height, menubar, plugins, toolbar, contentStyle, serializableConsumer);
+        return tinyMCEeditor;
     }
 
 

@@ -21,8 +21,8 @@ public class AddonView extends Div {
                 .setToolbar(TOOLBAR_BOLD, TOOLBAR_COPY, TOOLBAR_CUT, TOOLBAR_CODE, TOOLBAR_ALIGNCENTER)
                 .setPlugins(PLUGIN_ADVLIST, PLUGIN_ANCHOR, PLUGIN_TABLE)
                 .createTinyMCEeditor();
-        Button get = new Button("getValue", l -> System.out.println(theAddon.getValue()));
-        Button set = new Button("set", l -> theAddon.appendStrValue("setValue"));
+        Button get = new Button("getValue", l -> System.out.println(theAddon.getValue().toString()));
+        Button set = new Button("set", l -> theAddon.appendStrValue("Value that were inserted from button", "h6"));
         add(theAddon, get, set);
     }
 }
